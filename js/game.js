@@ -28,7 +28,7 @@ const Game = (() => {
 
   // Traffic
   let traffic      = [];
-  let spawnTimer   = 0;
+  let spawnTimer   = 60;
   let spawnInterval= 60;       // frames between spawns
 
   // Difficulty ramp
@@ -133,8 +133,8 @@ const Game = (() => {
     difficulty    = 1;
     diffTimer     = 0;
     roadSpeed     = 4;
-    spawnInterval = 80;
-    spawnTimer    = 20;  // Start with quick spawn for immediate follow-up traffic
+    spawnInterval = 60;
+    spawnTimer    = 45;  // Start with quick spawn for immediate follow-up traffic
 
     // Scoring
     score      = 0;
@@ -231,10 +231,14 @@ const Game = (() => {
         laneOptions = Array.from({ length: laneCount }, (_, j) => j);
       }
 
-      // Calculate Y position with better distribution - spread vehicles further apart initially
+      // Calculate Y position with better distribution - ensure vehicles spawn within visible range
+      // For initial traffic: spread across negative Y (above screen)
+      // For ongoing spawns: spawn just above screen for same-direction, below for oncoming
       const y = initial
         ? -(i * (baseMinGap + 30) + Math.random() * 60)  // Wider spread for initial traffic
-        : (oncoming ? Renderer.H() + 100 + i * 40 : -120 - Math.random() * 200 - i * 40);
+        : (oncoming 
+            ? Renderer.H() + 80 + Math.random() * 60  // Oncoming: spawn below screen
+            : -80 - Math.random() * 100);             // Same direction: spawn just above screen
 
       // Find open lane with adaptive gap based on speed and difficulty
       const dynamicGap = Math.max(70, baseMinGap * (0.8 + Math.random() * 0.4) - (difficulty * 5));
@@ -348,7 +352,7 @@ const Game = (() => {
       spawnTraffic(false, spawnCount);
       // Reduce interval variance at higher difficulties for consistent pressure
       const variance = difficulty > 3 ? 8 : 20;
-      spawnTimer = Math.max(15, spawnInterval) + Math.random() * variance;  // Ensure minimum 15 frames
+      spawnTimer = Math.max(25, spawnInterval) + Math.random() * variance;  // Ensure reasonable minimum interval
     }
 
     // Traffic update + collision

@@ -283,12 +283,13 @@ const Game = (() => {
       ? Array.from({ length: half }, (_, j) => j)
       : Array.from({ length: half }, (_, j) => j + half);
     
-    // Calculate Y position with better spacing for batch spawns
-    // Spread vehicles more evenly across the spawn zone
-    const spreadFactor = oncoming ? 80 : 70;
+    // Calculate Y position with MUCH better spacing for batch spawns
+    // Critical fix: spread vehicles across a larger range so they don't block each other
+    const spreadFactor = 150; // Fixed large spacing between ALL vehicles in batch
+    const startY = oncoming ? Renderer.H() + 80 : -80;
     const y = oncoming
-      ? Renderer.H() + 50 + (index * spreadFactor) + Math.random() * 20
-      : -50 - (index * spreadFactor) - Math.random() * 20;
+      ? startY + (index * spreadFactor)
+      : startY - (index * spreadFactor);
     
     // Use much smaller gap check for batch spawns to allow multiple vehicles in same lane
     // Only check against existing traffic, not within the current batch

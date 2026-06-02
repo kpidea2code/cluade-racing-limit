@@ -240,22 +240,26 @@ const Game = (() => {
       // Calculate Y position with better distribution
       // For initial traffic: spread across negative Y (above screen)
       // For ongoing spawns: spawn just above screen for same-direction, below for oncoming
+      // Add progressive spacing for multiple vehicles in same spawn cycle
       const y = initial
         ? -(i * (baseMinGap + 15) + Math.random() * 30)  // Tighter spread for initial traffic
         : (oncoming 
-            ? Renderer.H() + 50 + Math.random() * 30   // Oncoming: spawn below screen
+            ? Renderer.H() + 50 + (i * (baseMinGap + 20)) + Math.random() * 30   // Oncoming: spread below screen with spacing
             : -50 - Math.random() * 60);               // Same direction: spawn above screen
 
       // Find open lane with adaptive gap based on difficulty
-      const dynamicGap = Math.max(55, baseMinGap * (0.8 + Math.random() * 0.35) - (difficulty * 5));
+      // Reduce gap for oncoming traffic to allow more vehicles in opposing lanes
+      const gapMultiplier = oncoming ? 0.6 : (0.8 + Math.random() * 0.35);
+      const dynamicGap = Math.max(45, baseMinGap * gapMultiplier - (difficulty * 6));
       const lane = findOpenLane(laneOptions, y, dynamicGap);
       const lx = Renderer.laneCenter(lane, laneGeom);
       
       // Varied speeds for realistic traffic flow - increased range for more variety
       // Ensure minimum speed so traffic doesn't stall
-      const speedBase = mode === MODES.TWOWAY && oncoming ? 3.0 : 1.0;
-      const speedRange = mode === MODES.TWOWAY && oncoming ? 2.5 : 1.8 + (difficulty * 0.5);
-      const speed = Math.max(0.6, (speedBase + Math.random() * speedRange) * (0.75 + difficulty * 0.25));
+      // Oncoming traffic gets higher base speed and wider range for faster approach
+      const speedBase = mode === MODES.TWOWAY && oncoming ? 4.0 : 1.2;
+      const speedRange = mode === MODES.TWOWAY && oncoming ? 3.0 : 2.0 + (difficulty * 0.6);
+      const speed = Math.max(0.8, (speedBase + Math.random() * speedRange) * (0.8 + difficulty * 0.3));
 
       // Create traffic vehicle
       const tv = new Entities.TrafficVehicle({
@@ -354,8 +358,31 @@ const Game = (() => {
     spawnTimer -= dt;
     if (spawnTimer <= 0) {
       // Spawn more vehicles as difficulty increases - aggressive scaling for both modes
-      const spawnCount = 3 + Math.floor(difficulty * 1.5);  // More vehicles: 3-10+ per spawn
-      spawnTraffic(false, spawnCount);
+      const spawnCount = 4 + Math.floor(difficulty * 1.8);  // More vehicles: 4-13+ per spawn
+      
+      // In Two Way mode, ensure balanced oncoming traffic by spawning in batches
+      if (mode === MODES.TWOWAY) {
+        // Force half to be oncoming by controlling the random seed pattern
+        for (let batch = 0; batch < 2; batch++) {
+          const batchCount = Math.ceil(spawnCount / 2);
+          // Alternate between oncoming and same-direction preference
+          for (let i = 0; i < batchCount; i++) {
+            // Override random to ensure 50/50 split
+            const originalRandom = Math.random;
+            let callCount = 0;
+            Math.random = function() {
+              callCount++;
+              if (callCount === 1) return batch === 0 ? 0.3 : 0.7; // Force direction
+              return originalRandom();
+            };
+            spawnTraffic(false, 1);
+            Math.random = originalRandom;
+          }
+        }
+      } else {
+        spawnTraffic(false, spawnCount);
+      }
+      
       // Reduce interval variance at higher difficulties for consistent pressure
       const variance = difficulty > 3 ? 6 : 15;
       spawnTimer = Math.max(18, spawnInterval) + Math.random() * variance;  // Faster spawns

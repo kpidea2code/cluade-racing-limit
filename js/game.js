@@ -156,7 +156,7 @@ const Game = (() => {
     Entities.clearFloats();
 
     // Seed initial traffic with multiple vehicles spread across the road
-    spawnTraffic(true, 8);
+    spawnTraffic(true, 12);  // More initial traffic for immediate action
 
     Audio.startEngine();
     Audio.sfxStart();
@@ -217,10 +217,10 @@ const Game = (() => {
 
   function spawnTraffic(initial = false, count = 1) {
     const oncomingPossible = (mode === MODES.TWOWAY);
-    const baseMinGap = initial ? 100 : 120; // Tighter spacing for more traffic
+    const baseMinGap = initial ? 90 : 100; // Tighter spacing for more traffic
 
     for (let i = 0; i < count; i++) {
-      const oncoming = oncomingPossible && Math.random() < 0.45;
+      const oncoming = oncomingPossible && Math.random() < 0.5; // 50% chance for oncoming in two-way
       const half = Math.floor(laneCount / 2);
       let laneOptions = [];
       if (oncomingPossible) {
@@ -231,27 +231,27 @@ const Game = (() => {
         laneOptions = Array.from({ length: laneCount }, (_, j) => j);
       }
 
-      // Calculate Y position with better distribution - ensure vehicles spawn within visible range
+      // Calculate Y position with better distribution
       // For initial traffic: spread across negative Y (above screen)
       // For ongoing spawns: spawn just above screen for same-direction, below for oncoming
       const y = initial
-        ? -(i * (baseMinGap + 30) + Math.random() * 60)  // Wider spread for initial traffic
+        ? -(i * (baseMinGap + 20) + Math.random() * 40)  // Spread for initial traffic
         : (oncoming 
-            ? Renderer.H() + 80 + Math.random() * 60  // Oncoming: spawn below screen
-            : -80 - Math.random() * 100);             // Same direction: spawn just above screen
+            ? Renderer.H() + 60 + Math.random() * 40   // Oncoming: spawn below screen
+            : -60 - Math.random() * 80);               // Same direction: spawn above screen
 
-      // Find open lane with adaptive gap based on speed and difficulty
-      const dynamicGap = Math.max(70, baseMinGap * (0.8 + Math.random() * 0.4) - (difficulty * 5));
+      // Find open lane with adaptive gap based on difficulty
+      const dynamicGap = Math.max(60, baseMinGap * (0.85 + Math.random() * 0.3) - (difficulty * 4));
       const lane = findOpenLane(laneOptions, y, dynamicGap);
       const lx = Renderer.laneCenter(lane, laneGeom);
       
-      // More varied speeds for realistic traffic flow - wider range at higher difficulty
+      // Varied speeds for realistic traffic flow - increased range for more variety
       // Ensure minimum speed so traffic doesn't stall
-      const speedBase = mode === MODES.TWOWAY && oncoming ? 2.0 : 0.5;
-      const speedRange = mode === MODES.TWOWAY && oncoming ? 1.5 : 1.2 + (difficulty * 0.3);
-      const speed = Math.max(0.3, (speedBase + Math.random() * speedRange) * difficulty * 0.8);
+      const speedBase = mode === MODES.TWOWAY && oncoming ? 2.5 : 0.8;
+      const speedRange = mode === MODES.TWOWAY && oncoming ? 2.0 : 1.5 + (difficulty * 0.4);
+      const speed = Math.max(0.5, (speedBase + Math.random() * speedRange) * (0.7 + difficulty * 0.2));
 
-      // Ensure vehicle stays in its lane
+      // Create traffic vehicle
       const tv = new Entities.TrafficVehicle({
         x: lx, y,
         lane, laneX: lx,
@@ -337,22 +337,22 @@ const Game = (() => {
 
     // Difficulty ramp - more aggressive scaling for harder levels
     diffTimer += dt;
-    if (diffTimer > 400) {
+    if (diffTimer > 300) {  // Faster difficulty increase
       diffTimer = 0;
-      difficulty = Math.min(difficulty + 0.15, 5);  // Max difficulty increased to 5
-      roadSpeed  = Math.min(roadSpeed + 0.3, 14);   // Higher max speed
-      spawnInterval = Math.max(20, spawnInterval - 6);  // Faster spawn rate reduction
+      difficulty = Math.min(difficulty + 0.2, 5);  // Max difficulty 5, faster ramp
+      roadSpeed  = Math.min(roadSpeed + 0.4, 14);   // Higher max speed
+      spawnInterval = Math.max(15, spawnInterval - 8);  // Much faster spawn rate reduction
     }
 
     // Spawn traffic - multiple vehicles per spawn for denser traffic
     spawnTimer -= dt;
     if (spawnTimer <= 0) {
-      // Spawn more vehicles as difficulty increases - scaled aggressively at high levels
-      const spawnCount = 2 + Math.floor(difficulty * 1.2);  // Increased multiplier for harder levels
+      // Spawn more vehicles as difficulty increases - aggressive scaling for both modes
+      const spawnCount = 3 + Math.floor(difficulty * 1.5);  // More vehicles: 3-10+ per spawn
       spawnTraffic(false, spawnCount);
       // Reduce interval variance at higher difficulties for consistent pressure
-      const variance = difficulty > 3 ? 8 : 20;
-      spawnTimer = Math.max(25, spawnInterval) + Math.random() * variance;  // Ensure reasonable minimum interval
+      const variance = difficulty > 3 ? 6 : 15;
+      spawnTimer = Math.max(18, spawnInterval) + Math.random() * variance;  // Faster spawns
     }
 
     // Traffic update + collision

@@ -217,11 +217,12 @@ const Game = (() => {
 
   function spawnTraffic(initial = false, count = 1) {
     const oncomingPossible = (mode === MODES.TWOWAY);
-    const baseMinGap = initial ? 90 : 100; // Tighter spacing for more traffic
+    const baseMinGap = initial ? 80 : 90; // Even tighter spacing for maximum traffic
+    const half = Math.floor(laneCount / 2);
 
     for (let i = 0; i < count; i++) {
-      const oncoming = oncomingPossible && Math.random() < 0.5; // 50% chance for oncoming in two-way
-      const half = Math.floor(laneCount / 2);
+      // In Two Way mode, 70% chance for oncoming traffic to ensure heavy opposing traffic
+      const oncoming = oncomingPossible && Math.random() < 0.7;
       let laneOptions = [];
       if (oncomingPossible) {
         laneOptions = oncoming
@@ -235,21 +236,21 @@ const Game = (() => {
       // For initial traffic: spread across negative Y (above screen)
       // For ongoing spawns: spawn just above screen for same-direction, below for oncoming
       const y = initial
-        ? -(i * (baseMinGap + 20) + Math.random() * 40)  // Spread for initial traffic
+        ? -(i * (baseMinGap + 15) + Math.random() * 30)  // Tighter spread for initial traffic
         : (oncoming 
-            ? Renderer.H() + 60 + Math.random() * 40   // Oncoming: spawn below screen
-            : -60 - Math.random() * 80);               // Same direction: spawn above screen
+            ? Renderer.H() + 50 + Math.random() * 30   // Oncoming: spawn below screen
+            : -50 - Math.random() * 60);               // Same direction: spawn above screen
 
       // Find open lane with adaptive gap based on difficulty
-      const dynamicGap = Math.max(60, baseMinGap * (0.85 + Math.random() * 0.3) - (difficulty * 4));
+      const dynamicGap = Math.max(55, baseMinGap * (0.8 + Math.random() * 0.35) - (difficulty * 5));
       const lane = findOpenLane(laneOptions, y, dynamicGap);
       const lx = Renderer.laneCenter(lane, laneGeom);
       
       // Varied speeds for realistic traffic flow - increased range for more variety
       // Ensure minimum speed so traffic doesn't stall
-      const speedBase = mode === MODES.TWOWAY && oncoming ? 2.5 : 0.8;
-      const speedRange = mode === MODES.TWOWAY && oncoming ? 2.0 : 1.5 + (difficulty * 0.4);
-      const speed = Math.max(0.5, (speedBase + Math.random() * speedRange) * (0.7 + difficulty * 0.2));
+      const speedBase = mode === MODES.TWOWAY && oncoming ? 3.0 : 1.0;
+      const speedRange = mode === MODES.TWOWAY && oncoming ? 2.5 : 1.8 + (difficulty * 0.5);
+      const speed = Math.max(0.6, (speedBase + Math.random() * speedRange) * (0.75 + difficulty * 0.25));
 
       // Create traffic vehicle
       const tv = new Entities.TrafficVehicle({

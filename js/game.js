@@ -274,6 +274,40 @@ const Game = (() => {
     }
   }
 
+  // New function to spawn traffic with explicit direction control for Two Way mode
+  function spawnTrafficExplicit(oncoming, index) {
+    const baseMinGap = 90;
+    const half = Math.floor(laneCount / 2);
+    
+    let laneOptions = oncoming
+      ? Array.from({ length: half }, (_, j) => j)
+      : Array.from({ length: half }, (_, j) => j + half);
+    
+    // Calculate Y position with progressive spacing for each vehicle in the batch
+    const y = oncoming
+      ? Renderer.H() + 50 + (index * (baseMinGap + 20)) + Math.random() * 30
+      : -50 - (index * (baseMinGap + 15)) - Math.random() * 30;
+    
+    const gapMultiplier = oncoming ? 0.6 : 0.8;
+    const dynamicGap = Math.max(45, baseMinGap * gapMultiplier - (difficulty * 6));
+    const lane = findOpenLane(laneOptions, y, dynamicGap);
+    const lx = Renderer.laneCenter(lane, laneGeom);
+    
+    const speedBase = oncoming ? 4.0 : 1.2;
+    const speedRange = oncoming ? 3.0 : 2.0 + (difficulty * 0.6);
+    const speed = Math.max(0.8, (speedBase + Math.random() * speedRange) * (0.8 + difficulty * 0.3));
+    
+    const tv = new Entities.TrafficVehicle({
+      x: lx, y,
+      lane, laneX: lx,
+      speed,
+      color: Entities.randomTrafficColor(),
+      typeIdx: Math.floor(Math.random() * 5),
+      oncoming,
+    });
+    traffic.push(tv);
+  }
+
   /* ══════════════════════════════
      MAIN LOOP
   ══════════════════════════════ */
@@ -362,22 +396,16 @@ const Game = (() => {
       
       // In Two Way mode, ensure balanced oncoming traffic by spawning in batches
       if (mode === MODES.TWOWAY) {
-        // Force half to be oncoming by controlling the random seed pattern
-        for (let batch = 0; batch < 2; batch++) {
-          const batchCount = Math.ceil(spawnCount / 2);
-          // Alternate between oncoming and same-direction preference
-          for (let i = 0; i < batchCount; i++) {
-            // Override random to ensure 50/50 split
-            const originalRandom = Math.random;
-            let callCount = 0;
-            Math.random = function() {
-              callCount++;
-              if (callCount === 1) return batch === 0 ? 0.3 : 0.7; // Force direction
-              return originalRandom();
-            };
-            spawnTraffic(false, 1);
-            Math.random = originalRandom;
-          }
+        const halfCount = Math.ceil(spawnCount / 2);
+        
+        // Spawn same-direction traffic (right lanes) - first batch
+        for (let i = 0; i < halfCount; i++) {
+          spawnTrafficExplicit(false, i);
+        }
+        
+        // Spawn oncoming traffic (left lanes) - second batch  
+        for (let i = 0; i < halfCount; i++) {
+          spawnTrafficExplicit(true, i);
         }
       } else {
         spawnTraffic(false, spawnCount);

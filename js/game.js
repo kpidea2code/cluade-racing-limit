@@ -221,14 +221,19 @@ const Game = (() => {
     const half = Math.floor(laneCount / 2);
 
     for (let i = 0; i < count; i++) {
-      // In Two Way mode, 70% chance for oncoming traffic to ensure heavy opposing traffic
-      const oncoming = oncomingPossible && Math.random() < 0.7;
+      let oncoming = false;
       let laneOptions = [];
+      
       if (oncomingPossible) {
+        // In Two Way mode, split spawns between oncoming and same-direction traffic
+        // Ensure at least 40% are oncoming for heavy opposing traffic
+        oncoming = Math.random() < 0.5; // 50% chance for each direction
+        
         laneOptions = oncoming
-          ? Array.from({ length: half }, (_, j) => j)
-          : Array.from({ length: half }, (_, j) => j + half);
+          ? Array.from({ length: half }, (_, j) => j)  // Left lanes for oncoming
+          : Array.from({ length: half }, (_, j) => j + half);  // Right lanes for same direction
       } else {
+        // One Way mode: all lanes available, all same direction
         laneOptions = Array.from({ length: laneCount }, (_, j) => j);
       }
 

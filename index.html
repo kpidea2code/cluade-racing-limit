@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Racing Limits Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div id="app">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- START SCREEN -->
+  <div id="startScreen" class="screen active">
+    <div class="screen-particles" id="bgParticles"></div>
+    <div class="brand">
+      <div class="brand-sub">HIGHWAY</div>
+      <div class="brand-title">RACING<br><span>LIMITS</span></div>
+      <div class="brand-tagline">Push beyond every boundary</div>
+    </div>
+    <div class="start-modes">
+      <button class="mode-btn active-mode" data-mode="oneway" aria-label="One Way">
+        <span class="mode-icon">→</span><span class="mode-name">ONE WAY</span><span class="mode-desc">Classic endless</span>
+      </button>
+      <button class="mode-btn" data-mode="twoway" aria-label="Two Way">
+        <span class="mode-icon">⇄</span><span class="mode-name">TWO WAY</span><span class="mode-desc">Oncoming traffic</span>
+      </button>
+      <button class="mode-btn" data-mode="timeattack" aria-label="Time Attack">
+        <span class="mode-icon">⏱</span><span class="mode-name">TIME ATTACK</span><span class="mode-desc">60s sprint</span>
+      </button>
+      <button class="mode-btn" data-mode="freeride" aria-label="Free Ride">
+        <span class="mode-icon">∞</span><span class="mode-name">FREE RIDE</span><span class="mode-desc">No game over</span>
+      </button>
+    </div>
+    <div class="start-actions">
+      <button class="btn-primary" id="btnStart">START ENGINE</button>
+      <div class="start-secondary">
+        <button class="btn-icon" id="btnHowTo" title="How to Play">?</button>
+        <button class="btn-icon" id="btnSettings" title="Settings">⚙</button>
+        <button class="btn-icon" id="btnFullscreen" title="Fullscreen">⛶</button>
+        <button class="btn-icon" id="btnMute" title="Mute">🔊</button>
+      </div>
+    </div>
+    <div class="best-score-display">BEST&nbsp;<span id="startBestScore">0</span></div>
+  </div>
+
+  <!-- HOW TO PLAY -->
+  <div id="howToScreen" class="screen">
+    <div class="overlay-panel">
+      <h2 class="panel-title">HOW TO PLAY</h2>
+      <div class="howto-grid">
+        <div class="howto-card"><div class="howto-icon">🚗</div><div>Drive endlessly down the highway</div></div>
+        <div class="howto-card"><div class="howto-icon">↔</div><div>Change lanes to dodge traffic</div></div>
+        <div class="howto-card"><div class="howto-icon">⚡</div><div>Near misses boost your combo</div></div>
+        <div class="howto-card"><div class="howto-icon">💨</div><div>Higher speed = more points</div></div>
+        <div class="howto-card"><div class="howto-icon">🛑</div><div>Brake with Space or ↓</div></div>
+        <div class="howto-card"><div class="howto-icon">🏆</div><div>Beat your best score</div></div>
+      </div>
+      <div class="controls-table">
+        <div class="ctrl-col">
+          <div class="ctrl-header">⌨ Desktop</div>
+          <div class="ctrl-row"><kbd>↑ / W</kbd> Accelerate</div>
+          <div class="ctrl-row"><kbd>↓ / S</kbd> Brake</div>
+          <div class="ctrl-row"><kbd>← / A</kbd> Lane Left</div>
+          <div class="ctrl-row"><kbd>→ / D</kbd> Lane Right</div>
+          <div class="ctrl-row"><kbd>Space</kbd> Hard Brake</div>
+          <div class="ctrl-row"><kbd>P</kbd> Pause</div>
+        </div>
+        <div class="ctrl-col">
+          <div class="ctrl-header">📱 Mobile</div>
+          <div class="ctrl-row">▲ Accelerate button</div>
+          <div class="ctrl-row">▼ Brake button</div>
+          <div class="ctrl-row">◀ ▶ Lane buttons</div>
+          <div class="ctrl-row">⚡ Nitro button</div>
+          <div class="ctrl-row">Swipe left/right</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="btnHowToBack">GOT IT!</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="settingsScreen" class="screen">
+    <div class="overlay-panel">
+      <h2 class="panel-title">SETTINGS</h2>
+      <div class="settings-list">
+        <div class="setting-row">
+          <span class="setting-label">🔊 Sound Effects</span>
+          <label class="toggle"><input type="checkbox" id="toggleSFX" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">🎵 Engine Sound</span>
+          <label class="toggle"><input type="checkbox" id="toggleEngine" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">📳 Vibration</span>
+          <label class="toggle"><input type="checkbox" id="toggleVibration" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">🌙 Night Mode</span>
+          <label class="toggle"><input type="checkbox" id="toggleNight"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">🚗 Car Color</span>
+          <div class="color-picker" id="carColorPicker">
+            <span class="color-dot selected" data-color="#e63946" style="background:#e63946"></span>
+            <span class="color-dot" data-color="#2196f3" style="background:#2196f3"></span>
+            <span class="color-dot" data-color="#4caf50" style="background:#4caf50"></span>
+            <span class="color-dot" data-color="#ff9800" style="background:#ff9800"></span>
+            <span class="color-dot" data-color="#9c27b0" style="background:#9c27b0"></span>
+            <span class="color-dot" data-color="#00bcd4" style="background:#00bcd4"></span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <button class="btn-danger" id="btnClearScores">🗑 Clear High Scores</button>
+        </div>
+      </div>
+      <button class="btn-primary" id="btnSettingsBack">SAVE & BACK</button>
+    </div>
+  </div>
+
+  <!-- PAUSE -->
+  <div id="pauseScreen" class="screen">
+    <div class="overlay-panel compact">
+      <h2 class="panel-title">PAUSED</h2>
+      <div class="pause-stats">
+        <div class="pause-stat"><span class="ps-label">SCORE</span><span class="ps-val" id="pauseScore">0</span></div>
+        <div class="pause-stat"><span class="ps-label">SPEED</span><span class="ps-val" id="pauseSpeed">0</span></div>
+        <div class="pause-stat"><span class="ps-label">DIST</span><span class="ps-val" id="pauseDist">0m</span></div>
+      </div>
+      <div class="pause-actions">
+        <button class="btn-primary" id="btnResume">▶ RESUME</button>
+        <button class="btn-secondary" id="btnPauseRestart">↺ RESTART</button>
+        <button class="btn-secondary" id="btnPauseMenu">⌂ MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="gameOverScreen" class="screen">
+    <div class="overlay-panel">
+      <div class="go-title">GAME OVER</div>
+      <div class="go-verdict" id="goVerdict">WRECKED</div>
+      <div class="go-stats">
+        <div class="go-stat-row"><span class="go-label">SCORE</span><span class="go-value" id="goScore">0</span></div>
+        <div class="go-stat-row"><span class="go-label">BEST</span><span class="go-value highlight" id="goBest">0</span></div>
+        <div class="go-stat-row"><span class="go-label">DISTANCE</span><span class="go-value" id="goDist">0 m</span></div>
+        <div class="go-stat-row"><span class="go-label">MAX SPEED</span><span class="go-value" id="goSpeed">0 km/h</span></div>
+        <div class="go-stat-row"><span class="go-label">NEAR MISSES</span><span class="go-value" id="goMisses">0</span></div>
+        <div class="go-stat-row"><span class="go-label">MODE</span><span class="go-value" id="goMode">ONE WAY</span></div>
+      </div>
+      <div class="go-new-best hidden" id="goNewBest">🏆 NEW BEST!</div>
+      <div class="go-actions">
+        <button class="btn-primary" id="btnGoRestart">↺ PLAY AGAIN</button>
+        <button class="btn-secondary" id="btnGoMenu">⌂ MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <div class="hud-block">
+        <div class="hud-label">SCORE</div>
+        <div class="hud-value" id="hudScore">0</div>
+      </div>
+      <div class="hud-center">
+        <div class="hud-mode-badge" id="hudMode">ONE WAY</div>
+        <div class="timer-display hidden" id="hudTimer">1:00</div>
+      </div>
+      <div class="hud-block right">
+        <div class="hud-label">BEST</div>
+        <div class="hud-value" id="hudBest">0</div>
+      </div>
+    </div>
+    <div class="hud-bottom-row">
+      <div class="speed-widget">
+        <canvas id="speedGauge" width="100" height="60"></canvas>
+        <div class="speed-readout">
+          <span id="hudSpeedNum">0</span>
+          <span class="speed-unit">km/h</span>
+        </div>
+      </div>
+      <div class="hud-right-panel">
+        <div class="hud-mini-block"><div class="hud-label">DIST</div><div class="hud-value sm" id="hudDist">0m</div></div>
+        <div class="hud-mini-block"><div class="hud-label">×COMBO</div><div class="hud-value sm combo" id="hudCombo">1</div></div>
+      </div>
+    </div>
+    <div class="combo-bar-wrap">
+      <div class="combo-bar-track"><div class="combo-bar-fill" id="comboBarFill"></div></div>
+    </div>
+    <div class="nitro-bar-wrap">
+      <span class="nitro-label">⚡</span>
+      <div class="nitro-track"><div class="nitro-fill" id="nitroFill"></div></div>
+    </div>
+    <button class="hud-pause-btn" id="btnPause" aria-label="Pause">⏸</button>
+    <div class="near-miss-popup hidden" id="nearMissPopup"></div>
+    <div class="mobile-controls" id="mobileControls">
+      <button class="mc-btn mc-accel" id="mcAccel" aria-label="Accelerate">▲</button>
+      <button class="mc-btn mc-left" id="mcLeft" aria-label="Lane Left">◀</button>
+      <button class="mc-btn mc-nitro" id="mcNitro" aria-label="Nitro">⚡</button>
+      <button class="mc-btn mc-right" id="mcRight" aria-label="Lane Right">▶</button>
+      <button class="mc-btn mc-brake" id="mcBrake" aria-label="Brake">▼</button>
+    </div>
+  </div>
+</div>
+<script src="js/audio.js"></script>
+<script src="js/renderer.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
